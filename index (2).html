@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ລະບົບຈັດການພະນັກງານອອນໄລນ໌</title>
+<style>
+  body {
+    font-family: "Phetsarath OT", sans-serif;
+    background-color: #eef2f7;
+    margin: 0;
+  }
+  header {
+    background: linear-gradient(90deg,#007bff,#00bcd4);
+    color: white;
+    text-align: center;
+    padding: 15px;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  nav {
+    background: #1f2937;
+    padding: 10px;
+    text-align: center;
+  }
+  nav button {
+    background: #374151;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  nav button:hover { background: #2563eb; }
+  .container {
+    max-width: 1000px;
+    margin: 20px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  }
+  h2 { color: #007bff; }
+  form input, form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  button.action {
+    background-color: #16a34a;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  button.action:hover { background: #0f9d58; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+  th { background: #007bff; color: white; }
+  .page { display: none; }
+  #loginPage { display: block; }
+</style>
+</head>
+<body>
+
+<header>💼 ລະບົບຈັດການພະນັກງານອອນໄລນ໌</header>
+
+<nav id="menu" style="display:none">
+  <button onclick="showPage('dashboard')">🏠 ໜ້າຫຼັກ</button>
+  <button onclick="showPage('tasks')">📝 ວຽກທີ່ມອບໝາຍ</button>
+  <button onclick="showPage('checkin')">🕓 ເຂົ້າວຽກ / ອອກວຽກ</button>
+  <button onclick="logout()">🚪 ອອກລະບົບ</button>
+</nav>
+
+<!-- LOGIN PAGE -->
+<div class="container page" id="loginPage">
+  <h2>🔐 ເຂົ້າສູ່ລະບົບ</h2>
+  <form id="loginForm">
+    <label>ຊື່ຜູ້ໃຊ້:</label>
+    <input type="text" id="username" required>
+    <label>ລະຫັດຜ່ານ:</label>
+    <input type="password" id="password" required>
+    <button class="action" type="submit">ເຂົ້າລະບົບ</button>
+  </form>
+</div>
+
+<!-- DASHBOARD -->
+<div class="container page" id="dashboard">
+  <h2>📊 ພາບລວມການເຮັດວຽກ</h2>
+  <p>ພະນັກງານ: <b id="empNameDisplay"></b></p>
+  <p>ວຽກທີ່ກຳລັງເຮັດ: <b id="currentTask">-</b></p>
+</div>
+
+<!-- TASK PAGE -->
+<div class="container page" id="tasks">
+  <h2>📝 ວຽກທີ່ມອບໝາຍ</h2>
+  <table id="taskTable">
+    <thead>
+      <tr><th>ວຽກ</th><th>ສະຖານະ</th><th>ການດຳເນີນ</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- CHECK-IN PAGE -->
+<div class="container page" id="checkin">
+  <h2>🕓 ບັນທຶກເວລາການເຮັດວຽກ</h2>
+  <p>ວັນທີ: <span id="today"></span></p>
+  <button class="action" onclick="checkIn()">✅ ເຂົ້າວຽກ</button>
+  <button class="action" onclick="checkOut()" style="background:#dc2626">⛔ ອອກວຽກ</button>
+  <p id="timeLog"></p>
+</div>
+
+<script>
+let users = [
+  {username:"admin", password:"1234", role:"manager", name:"ຜູ້ຈັດການ"},
+  {username:"AAAA", password:"1234", role:"employee", name:"AAAA"},
+  {username:"BBBB", password:"1234", role:"employee", name:"BBBB"},
+  {username:"CCCC", password:"1234", role:"employee", name:"CCCC"},
+
+
+];
+let tasks = [
+  {emp:"AAAA", job:"ກວດເຊັກສິນຄ້າໃນສາງ", status:"ກຳລັງເຮັດ"},
+  {emp:"BBBB", job:"ຈັດຮຽງເອກະສານ", status:"ລໍຖ້າເຮັດ"}
+];
+let currentUser = null;
+
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.style.display="none");
+  document.getElementById(id).style.display="block";
+}
+
+document.getElementById("loginForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const user = username.value;
+  const pass = password.value;
+  const found = users.find(u=>u.username===user && u.password===pass);
+  if(found){
+    currentUser = found;
+    document.getElementById("menu").style.display = "block";
+    showPage('dashboard');
+    empNameDisplay.textContent = currentUser.name;
+    renderTasks();
+  } else {
+    alert("❌ ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜິດ!");
+  }
+});
+
+function logout(){
+  currentUser = null;
+  document.getElementById("menu").style.display = "none";
+  showPage('loginPage');
+}
+
+function renderTasks(){
+  const tbody = document.querySelector("#taskTable tbody");
+  tbody.innerHTML = "";
+  const myTasks = tasks.filter(t=>t.emp===currentUser.name);
+  myTasks.forEach(t=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${t.job}</td>
+        <td>${t.status}</td>
+        <td><button onclick="doneTask('${t.job}')">✔ ແຈ້ງເຮັດແລ້ວ</button></td>
+      </tr>`;
+  });
+  document.getElementById("currentTask").textContent = myTasks[0]?.job || "-";
+}
+
+function doneTask(job){
+  const t = tasks.find(t=>t.job===job);
+  if(t){ t.status = "ເຮັດແລ້ວ ✅"; renderTasks(); }
+}
+
+function checkIn(){
+  const now = new Date().toLocaleTimeString();
+  document.getElementById("timeLog").textContent = "ເຂົ້າວຽກເວລາ: " + now;
+}
+function checkOut(){
+  const now = new Date().toLocaleTimeString();
+  document.getElementById("timeLog").textContent += " | ອອກວຽກເວລາ: " + now;
+}
+
+document.getElementById("today").textContent = new Date().toLocaleDateString("lo-LA");
+</script>
+
+</body>
+</html>
